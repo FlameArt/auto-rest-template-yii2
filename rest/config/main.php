@@ -16,6 +16,9 @@ return [
 
         'request' => [
             'csrfParam' => 'vp',
+            'parsers' => [
+                'application/json' => 'yii\web\JsonParser',
+            ]
         ],
 
         'user' => [
