@@ -38,14 +38,20 @@ namespace rest\controllers\api;
 
 // Imports
 use yii\rest\ActiveController;
+use rest\controllers\ActiveRestController;
 
 
 /**
  * REST API Controller <?=ucfirst($tableclass)?>
  */
-class <?=ucfirst($controllerClass)?>Controller extends ActiveController
+class <?=ucfirst($controllerClass)?>Controller extends ActiveRestController
 {
 
     public $modelClass = 'common\models\DB\<?=ucfirst($tableclass)?>';
+
+    /**
+     * @var array Поля, которые не надо выводить при запросе
+     */
+    public $filterFields = [];
 
 }

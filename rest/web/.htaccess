@@ -10,5 +10,13 @@ RewriteRule . index.php
   Header set Expires "Thu, 15 Apr 2010 20:00:00 GMT"
 </FilesMatch>
 
+
 # Включаем для отладки на домашней машине
-Header set Access-Control-Allow-Origin "*"
+Header always set Access-Control-Allow-Origin "*"
+Header always set Access-Control-Allow-Methods "GET, POST, PUT, PATCH, POST, DELETE, OPTIONS"
+
+# OPTIONS запрос автоматически рабочий
+RewriteCond %{REQUEST_METHOD} OPTIONS
+RewriteRule ^(.*)$ $1 [R=200,L]
+
+Header always set Access-Control-Allow-Headers "Origin, X-Requested-With, Content-Type, Accept, *"
