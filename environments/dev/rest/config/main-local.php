@@ -21,8 +21,8 @@ if (!YII_ENV_TEST) {
         'class' => 'yii\gii\Module',
         'allowedIPs' => ['127.0.0.1', '::1'],
         'generators' => [
-            'restGenerator' => [
-                'class' => 'rest\gii\rest\Generator'
+            'restgen' => [
+                'class' => 'rest\gii\restgen\Generator'
             ],
             'apiGii' => [
                 'class' => 'rest\gii\crud\Generator'
