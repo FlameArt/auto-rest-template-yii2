@@ -13,7 +13,7 @@ RewriteRule . index.php
 
 # Включаем для отладки на домашней машине
 Header always set Access-Control-Allow-Origin "*"
-Header always set Access-Control-Allow-Methods "GET, POST, PUT, PATCH, POST, DELETE, OPTIONS"
+Header always set Access-Control-Allow-Methods "GET, POST, PUT, PATCH, DELETE, OPTIONS"
 
 # OPTIONS запрос автоматически рабочий
 RewriteCond %{REQUEST_METHOD} OPTIONS

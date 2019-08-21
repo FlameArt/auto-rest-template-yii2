@@ -65,9 +65,7 @@ return [
             'enableStrictParsing' => false,
 
             'rules' => [
-                //['class' => 'yii\rest\UrlRule', 'controller' => 'user'],
-                'lul' => 'site/index',
-                '<controller:[\w-]+>s/<action:[\w-]+>' => '<controller>/<action>',
+                ['class' => 'yii\rest\UrlRule', 'controller' => 'user']
             ],
         ],
 
