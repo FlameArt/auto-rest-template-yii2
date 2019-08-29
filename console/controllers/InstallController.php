@@ -13,13 +13,13 @@ class InstallController extends Controller
         //SQL операции
         self::installDB();
 
-        echo 'Table sessions, users for backend and frontend created\r\n';
+        echo 'Table sessions created\r\n';
 
 
         //создать RBAC
         //self::createRBAC();
 
-        echo 'RBAC Installed\r\n';
+        // echo 'RBAC Installed\r\n';
 
     }
 
@@ -84,6 +84,16 @@ class InstallController extends Controller
 
     //Первая SQL миграция
     public static function installDB() {
+
+        // Создаём таблицу сессии
+        Yii::$app->db->createCommand('
+CREATE TABLE sessions
+(
+    id CHAR(40) NOT NULL PRIMARY KEY,
+    expire INTEGER,
+    data BLOB
+)'
+        )->execute();
 
         return true;
 
