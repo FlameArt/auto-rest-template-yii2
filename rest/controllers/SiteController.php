@@ -127,8 +127,10 @@ class SiteController extends Controller
                     if (in_array($name, $rule[0])) {
 
                         // Далее по типам правил: если строка или число - вводим это в тип с параметрами длины
-                        if ($rule[1] === 'string' || $rule[1] === 'integer' || $rule[1] === 'boolean') {
+                        if ($rule[1] === 'string' || $rule[1] === 'integer' || $rule[1] === 'boolean' || $rule[1] === 'number' || $rule[1] === 'safe') {
                             $field['type'] = $rule[1];
+                            if($field['type']==='number') $field['type'] = 'double';
+                            if($field['type']==='safe') $field['type'] = 'timestamp';
                             if (isset($rule['max']))
                                 $field['max_symbols'] = $rule['max'];
                         }
