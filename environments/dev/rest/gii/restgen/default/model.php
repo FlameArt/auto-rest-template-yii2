@@ -74,6 +74,19 @@ class <?= $className ?> extends <?= '\\' . ltrim($generator->baseClass, '\\') . 
 <?php endif; ?>
 
     /**
+     * Список всех полей ДБ с их оригинальными типами
+     * @return array
+     */
+    public static function tableFields() {
+        return [
+<?php foreach ($tableSchema->columns as $column): ?>
+            '<?=$column->name?>' => '<?=$column->type?>',
+<?php endforeach; ?>
+        ];
+    }
+
+
+    /**
      * @inheritdoc
      */
     public function rules()

@@ -53,6 +53,9 @@ class ActiveRestController extends ActiveController
         // Создаём новый поиск
         $DB = ($this->modelClass)::find();
 
+        // Список полей
+        $DBFields = ($this->modelClass)::tableFields();
+
         // Сортировка, пагинация работают автоматически
 
         // Указываем отдельные поля
@@ -61,8 +64,30 @@ class ActiveRestController extends ActiveController
 
         // Указываем фильтры
         if(isset($data['where']))
-            foreach ($data['where'] as $key=>$value)
-                $DB->andWhere([$key=>$value]);
+
+            foreach ($data['where'] as $key=>$value) {
+
+                // Поиск по обычному полю
+                if($DBFields[$key] !== 'json')
+                    $DB->andWhere([$key => $value]);
+
+                else {
+
+                    // Поиск по JSON-полю
+                    if(is_array($value)===false || count($value)===0) continue;
+
+                    // Генерим условие ИЛИ для каждого элемента
+                    // Совместимо с MySQL 5.7, в 8.0 можно использовать супербыстрый оператор MEMBER OF()
+                    $OR = null;
+                    foreach ($value as $item)
+                        $OR[]=new Expression("JSON_CONTAINS(".\Yii::$app->db->quoteColumnName($key).",\"".str_replace("\'","",\Yii::$app->db->quoteValue($item)."\")"));
+
+                    // Склеиваем предыдущие условия AND через внутренний OR
+                    $DB->andWhere(array_merge(['OR'],$OR));
+
+                }
+
+            }
 
         // Отдаём ActiveDataProvider, который поддерживает авто-пагинацию и сортировку
         return new ActiveDataProvider([
