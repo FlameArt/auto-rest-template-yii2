@@ -115,6 +115,55 @@ class <?= $className ?> extends <?= '\\' . ltrim($generator->baseClass, '\\') . 
         <?= $relation[0] . "\n" ?>
     }
 <?php endforeach; ?>
+
+
+<?php foreach ($full_relations as $name => $relation): ?>
+    /**
+    * Расширяемые колонки поля <?= $name ?>, которые находятся в другой таблице
+    * будут заполнены при необходимости за 1 запрос и выведены в поле <?= $name ?>_
+    */
+    public <?php
+    $full_rel_i = 0;
+    foreach ($relation as $column_name => $column_value) {
+        $full_rel_i++;
+        if($full_rel_i>1) echo ", ";
+        echo '$__' . strtolower($name) ."__". $column_name;
+    } ?>;
+<?php endforeach; ?>
+
+<?php foreach ($full_relations as $name => $relation): ?>
+    /**
+     * Компонуем все запрошенные через JOIN элементы поля <?=ucfirst($name)?> в массив, который выведет его
+     * @return array
+     */
+    public function get<?=ucfirst($name)?>_(){
+
+        $need_fields = (Yii::$app->controller)->extendFields;
+        foreach (get_object_vars($this) as $key=>$value){
+            if(strpos($key,"__<?=$name?>__")===0)
+                $related_fields[substr($key, strpos($key, '__', 2) + 2)] = $value;
+        }
+
+        return $related_fields;
+
+    }
+
+<?php endforeach; ?>
+
+    /**
+     * Запрашиваем у движка дополнительные поля из выдачи, указанные в ExtraFields, которые должны быть выведены
+     * @return array
+     */
+    public function fields()
+    {
+        $need_fields = (Yii::$app->controller)->extendFields;
+        $arr = [];
+        foreach ($need_fields as $field)
+            $arr[]=$field."_";
+        return array_merge(parent::fields(),$arr);
+    }
+
+
 <?php if ($queryClassName): ?>
 <?php
     $queryClassFullName = ($generator->ns === $generator->queryNs) ? $queryClassName : '\\' . $generator->queryNs . '\\' . $queryClassName;

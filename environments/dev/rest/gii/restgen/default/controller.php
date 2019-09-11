@@ -39,6 +39,7 @@ namespace rest\controllers\api;
 // Imports
 use yii\rest\ActiveController;
 use rest\controllers\ActiveRestController;
+use \common\models\DB\<?=ucfirst($tableclass)?>;
 
 
 /**
@@ -53,5 +54,23 @@ class <?=ucfirst($controllerClass)?>Controller extends ActiveRestController
      * @var array Поля, которые не надо выводить при запросе
      */
     public $filterFields = [];
+
+    /**
+     * @var array Поля, связанные с внешними таблицами, которые надо добавить в выдачу
+     */
+    public $extendFields = [];
+
+
+
+    /**
+     * Расширить поиск по модели
+     * @param $model ActiveQuery
+     * @param $data array json-запрос, который был получен
+     * @return ActiveQuery
+     */
+    public function ExtendQuery($model, $data)
+    {
+        return $model;
+    }
 
 }

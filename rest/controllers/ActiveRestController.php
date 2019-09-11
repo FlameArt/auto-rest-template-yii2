@@ -7,6 +7,10 @@ use yii\helpers\Json;
 use yii\rest\ActiveController;
 use yii\data\ActiveDataProvider;
 use \yii\db\ActiveRecord;
+use yii\db\ActiveQuery;
+use yii\db\Expression;
+
+
 
 
 /**
@@ -18,6 +22,11 @@ class ActiveRestController extends ActiveController
      * @var array Поля, которые не надо выводить при запросе
      */
     public $filterFields = [];
+
+    /**
+     * @var array Поля, которые надо расширить
+     */
+    public $extendFields = [];
 
     /**
      * Добавляем к стандартным собственный обработчик
@@ -50,7 +59,10 @@ class ActiveRestController extends ActiveController
         // Данные
         $data = Json::decode(\Yii::$app->request->getRawBody(), true);
 
-        // Создаём новый поиск
+        /**
+         * Создаём новый поиск
+         * @var $DB ActiveQuery
+         */
         $DB = ($this->modelClass)::find();
 
         // Список полей
@@ -60,7 +72,10 @@ class ActiveRestController extends ActiveController
 
         // Указываем отдельные поля
         if(isset($data['fields']))
-            $DB->select($data['fields']);
+            $DB->addSelect($data['fields']);
+        else
+            // По-умолчанию получаем все столбцы
+            $DB->addSelect(["*"]);
 
         // Указываем фильтры
         if(isset($data['where']))
@@ -79,8 +94,12 @@ class ActiveRestController extends ActiveController
                     // Генерим условие ИЛИ для каждого элемента
                     // Совместимо с MySQL 5.7, в 8.0 можно использовать супербыстрый оператор MEMBER OF()
                     $OR = null;
-                    foreach ($value as $item)
-                        $OR[]=new Expression("JSON_CONTAINS(".\Yii::$app->db->quoteColumnName($key).",\"".str_replace("\'","",\Yii::$app->db->quoteValue($item)."\")"));
+                    foreach ($value as $item) {
+                        if(is_string($item))
+                            $OR[] = new Expression("JSON_CONTAINS(" . \Yii::$app->db->quoteColumnName($key) . ",\"" . str_replace("\'", "", \Yii::$app->db->quoteValue($item) . "\")"));
+                        else
+                            $OR[] = new Expression("JSON_CONTAINS(" . \Yii::$app->db->quoteColumnName($key) . "," . \Yii::$app->db->quoteValue(json_encode($item)) . ")");
+                    }
 
                     // Склеиваем предыдущие условия AND через внутренний OR
                     $DB->andWhere(array_merge(['OR'],$OR));
@@ -89,10 +108,59 @@ class ActiveRestController extends ActiveController
 
             }
 
+        // Далее получаем все поля, которые надо получить из других таблиц
+        // PERFORMANCE: использован самый быстрый способ получения - через 1 LEFT JOIN запрос сразу для всех записей
+        //              такой суммарно даёт 8 запросов против 14 для ->with, и для (15+число записей) для expand
+        //              данные затем распределяются по массивам в TableModel для каждой таблицы и выводятся в поле extra
+
+        // Объединяем extends поля в контроллере с полями в запросе
+        // [можно указывать даже просто строку, как интуитивно понятно]
+        $expand_fields = []; // $this->extendFields;
+        if(isset($data['expand'])) $expand_fields = $data['expand'];
+        if(is_string($expand_fields)) $expand_fields = [$expand_fields];
+        if(is_array($expand_fields)) $this->extendFields = array_unique(array_merge($expand_fields,$this->extendFields));
+
+        // Делаем механику экстра-полей
+        foreach ($this->extendFields as $field) {
+
+            // Находим модель зависимого класса по имени поля, чтобы из него получить имя таблицы
+            foreach (($this->modelClass)::rules() as $rule) {
+
+                if($rule[0][0]===$field && isset($rule['targetClass'])) {
+
+                    // Класс найден - вписываем найденную таблицу в LEFT JOIN
+                    $DB->leftJoin(($rule['targetClass'])::tableName(),
+                        ($rule['targetClass'])::tableName() . "." . $rule['targetAttribute'][$field] .
+                        ' = ' . ($this->modelClass)::tableName() . "." . $field);
+
+                    // Записываем все поля таблицы для вывода
+                    foreach (($rule['targetClass'])::tableFields() as $fieldName=>$fieldValue)
+                        $DB->addSelect(['__'.$field."__".$fieldName => ($rule['targetClass'])::tableName() . "." . $fieldName]);
+
+                }
+
+            }
+
+        }
+
+        // Добавляем в модель специфические обработчики, если нужно
+        $DB = $this->ExtendQuery($DB, $data);
+
         // Отдаём ActiveDataProvider, который поддерживает авто-пагинацию и сортировку
         return new ActiveDataProvider([
             'query' => $DB,
         ]);
+    }
+
+    /**
+     * Расширить поиск по модели
+     * @param $model ActiveQuery
+     * @param $data array json-запрос, который был получен
+     * @return ActiveQuery
+     */
+    public function ExtendQuery($model, $data)
+    {
+        return $model;
     }
 
 }

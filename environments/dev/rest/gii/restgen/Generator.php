@@ -44,6 +44,9 @@ class Generator extends \yii\gii\Generator
     public $queryBaseClass = 'yii\db\ActiveQuery';
     public $controllerClass;
 
+    # Все колонки связанных таблиц
+    public $full_relations = [];
+
 
     /**
      * @inheritdoc
@@ -214,6 +217,7 @@ class Generator extends \yii\gii\Generator
                 'labels' => $this->generateLabels($tableSchema),
                 'rules' => $this->generateRules($tableSchema),
                 'relations' => isset($relations[$tableName]) ? $relations[$tableName] : [],
+                'full_relations' => isset($this->full_relations[$tableName]) ? $this->full_relations[$tableName] : [],
             ];
             $files[] = new CodeFile(
                 Yii::getAlias('@' . str_replace('\\', '/', $this->ns)) . '/models/Table' . $modelClassName . '.php',
@@ -495,6 +499,9 @@ class Generator extends \yii\gii\Generator
                     unset($refs[0]);
                     $fks = array_keys($refs);
                     $refClassName = $this->generateClassName($refTable);
+
+                    // Добавляем колонки связанных таблиц в выдачу
+                    $this->full_relations[$table->fullName][$fks[0]]=$refTableSchema->columns;
 
                     // Add relation for this table
                     $link = $this->generateRelationLink(array_flip($refs));
