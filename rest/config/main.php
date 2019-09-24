@@ -46,6 +46,18 @@ return [
                     'class' => 'yii\log\FileTarget',
                     'levels' => ['error', 'warning'],
                 ],
+                /* LOGGING ALL QUERIES
+                [
+                    'class' => 'yii\log\FileTarget',
+                    'logFile' => '@runtime/logs/profile.log',
+                    'logVars' => [],
+                    'levels' => ['profile'],
+                    'categories' => ['yii\db\Command::query'],
+                    'prefix' => function($message) {
+                        return '';
+                    }
+                ]
+                */
             ],
         ],
 
