@@ -68,14 +68,21 @@ class ActiveRestController extends ActiveController
         // Список полей
         $DBFields = ($this->modelClass)::tableFields();
 
-        // Сортировка, пагинация работают автоматически
+        // Сортировка работает автоматически
+
+        // Паджинация
+        $pagination = [];
+        if(isset($data['page']))
+            $pagination['page'] = (int)($data['page'])-1;
+        if(isset($data['per-page']))
+            $pagination['pageSize'] = (int)$data['per-page'];
 
         // Указываем отдельные поля
         if(isset($data['fields']))
             $DB->addSelect($data['fields']);
         else
             // По-умолчанию получаем все столбцы
-            $DB->addSelect(["*"]);
+            $DB->addSelect([\Yii::$app->db->quoteColumnName(($this->modelClass)::tableName()).".*"]);
 
         // Указываем фильтры
         if(isset($data['where']))
