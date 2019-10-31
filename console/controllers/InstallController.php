@@ -3,6 +3,7 @@ namespace console\controllers;
 
 use Yii;
 use yii\console\Controller;
+use yii\db\Exception;
 use yii\db\Query;
 
 class InstallController extends Controller
@@ -15,6 +16,9 @@ class InstallController extends Controller
 
         echo 'Table sessions created\r\n';
 
+        self::InstallContentModel();
+
+        echo 'Content model installed\r\n';
 
         //создать RBAC
         //self::createRBAC();
@@ -79,6 +83,34 @@ class InstallController extends Controller
 
         //Присоединим роли к существующим пользователям
         $auth->assign($admin, 1); //даём роль админа юзеру с ID=1
+
+    }
+
+
+    public static function InstallContentModel(){
+
+        try {
+            Yii::$app->db->createCommand('
+CREATE TABLE `content` (
+	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+	`site` INT(10) UNSIGNED NULL DEFAULT NULL,
+	`title` VARCHAR(500) NULL DEFAULT NULL COMMENT \'Заголовок страницы\',
+	`content` TEXT NULL COMMENT \'Содержимое страницы\',
+	`page` VARCHAR(256) NULL DEFAULT NULL COMMENT \'Страница, компонент Vue, для которого предназначен контент\',
+	`public_date` TIMESTAMP NULL DEFAULT NULL COMMENT \'Заложенная дата публикации\',
+	`status` TINYINT(4) NULL DEFAULT \'0\' COMMENT \'Статус записи: 0 - скрыт, 1 - опубликован\',
+	`route` VARCHAR(2048) NULL DEFAULT \'/NotReleased\' COMMENT \'Полный роут-адрес до страницы\',
+	PRIMARY KEY (`id`)
+)
+COLLATE=\'utf8mb4_general_ci\'
+ENGINE=InnoDB
+;
+
+'
+            )->execute();
+        } catch (Exception $e) {
+        }
+
 
     }
 

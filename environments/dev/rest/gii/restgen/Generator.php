@@ -501,7 +501,7 @@ class Generator extends \yii\gii\Generator
                     $refClassName = $this->generateClassName($refTable);
 
                     // Добавляем колонки связанных таблиц в выдачу
-                    $this->full_relations[$table->fullName][$fks[0]]=$refTableSchema->columns;
+                    $this->full_relations[$table->fullName][$fks[0]]=['columns'=>$refTableSchema->columns, 'tableModel'=>$refClassName];
 
                     // Add relation for this table
                     $link = $this->generateRelationLink(array_flip($refs));

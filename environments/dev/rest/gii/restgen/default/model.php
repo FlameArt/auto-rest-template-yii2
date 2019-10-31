@@ -124,7 +124,7 @@ class <?= $className ?> extends <?= '\\' . ltrim($generator->baseClass, '\\') . 
     */
     public <?php
     $full_rel_i = 0;
-    foreach ($relation as $column_name => $column_value) {
+    foreach ($relation['columns'] as $column_name => $column_value) {
         $full_rel_i++;
         if($full_rel_i>1) echo ", ";
         echo '$__' . strtolower($name) ."__". $column_name;
@@ -138,10 +138,16 @@ class <?= $className ?> extends <?= '\\' . ltrim($generator->baseClass, '\\') . 
      */
     public function get<?=ucfirst($name)?>_(){
 
+        $related_table = ('<?= $generator->ns .'\\'. $relation['tableModel'] ?>')::tableFields();
         $need_fields = (Yii::$app->controller)->extendFields;
         foreach (get_object_vars($this) as $key=>$value){
-            if(strpos($key,"__<?=$name?>__")===0)
-                $related_fields[substr($key, strpos($key, '__', 2) + 2)] = $value;
+            if(strpos($key,"__<?=$name?>__")===0) {
+                $rkey = substr($key, strpos($key, '__', 2) + 2);
+                if($related_table[$rkey]==='json')
+                    $related_fields[$rkey] = json_decode($value);
+                else
+                    $related_fields[$rkey] = $value;
+            }
         }
 
         return $related_fields;
