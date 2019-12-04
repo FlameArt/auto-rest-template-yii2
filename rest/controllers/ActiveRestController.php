@@ -71,9 +71,9 @@ class ActiveRestController extends ActiveController
         // Сортировка
         if(isset($data['sort'])) {
             if(substr( $data['sort'], 0, 1 ) === '-' )
-                $DB->orderBy([substr( $data['sort'],1)=>SORT_DESC]);
+                $DB->orderBy([substr( $data['sort'],1) => SORT_DESC]);
             else
-                $DB->orderBy([substr( $data['sort'],1)=>SORT_ASC]);
+                $DB->orderBy([$data['sort'] => SORT_ASC]);
         }
 
         // Паджинация
