@@ -68,7 +68,13 @@ class ActiveRestController extends ActiveController
         // Список полей
         $DBFields = ($this->modelClass)::tableFields();
 
-        // Сортировка работает автоматически
+        // Сортировка
+        if(isset($data['sort'])) {
+            if(substr( $data['sort'], 0, 1 ) === '-' )
+                $DB->orderBy([substr( $data['sort'],1)=>SORT_DESC]);
+            else
+                $DB->orderBy([substr( $data['sort'],1)=>SORT_ASC]);
+        }
 
         // Паджинация
         $pagination = [];
@@ -156,6 +162,7 @@ class ActiveRestController extends ActiveController
         // Отдаём ActiveDataProvider, который поддерживает авто-пагинацию и сортировку
         return new ActiveDataProvider([
             'query' => $DB,
+            'pagination' => $pagination
         ]);
     }
 
