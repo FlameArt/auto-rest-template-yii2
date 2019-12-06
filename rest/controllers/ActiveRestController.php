@@ -70,11 +70,21 @@ class ActiveRestController extends ActiveController
 
         // Сортировка
         if(isset($data['sort'])) {
-            if(substr( $data['sort'], 0, 1 ) === '-' )
-                $DB->orderBy([substr( $data['sort'],1) => SORT_DESC]);
-            else
-                $DB->orderBy([$data['sort'] => SORT_ASC]);
+            // Спилитим несколько параметров
+            $tsort = $data['sort'];
+            if(is_string($tsort)) $tsort = explode(',', $tsort);
+
+            foreach ($tsort as $sortitem) {
+                if (substr($sortitem, 0, 1) === '-')
+                    $DB->addOrderBy([substr($sortitem, 1) => SORT_DESC]);
+                else
+                    $DB->addOrderBy([ $sortitem => SORT_ASC]);
+            }
         }
+
+        // Удалить дубликаты, но нужно указывать одно поле в Fields
+        if(isset($data['RemoveDuplicates']))
+            $DB->distinct();
 
         // Паджинация
         $pagination = [];
@@ -96,8 +106,13 @@ class ActiveRestController extends ActiveController
             foreach ($data['where'] as $key=>$value) {
 
                 // Поиск по обычному полю
-                if($DBFields[$key] !== 'json')
-                    $DB->andWhere([$key => $value]);
+                if($DBFields[$key] !== 'json') {
+                    // Массивные значения добавляем как условия, т.к. это может быть типа LIKE или NOT IN
+                    if (is_array($value))
+                        $DB->andWhere($value);
+                    else
+                        $DB->andWhere([$key => $value]);
+                }
 
                 else {
 
