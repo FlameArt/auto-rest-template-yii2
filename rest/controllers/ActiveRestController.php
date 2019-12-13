@@ -106,7 +106,7 @@ class ActiveRestController extends ActiveController
             foreach ($data['where'] as $key=>$value) {
 
                 // Поиск по обычному полю
-                if($DBFields[$key] !== 'json') {
+                if(!array_key_exists($key, $DBFields) || $DBFields[$key] !== 'json') {
                     // Массивные значения добавляем как условия, т.к. это может быть типа LIKE или NOT IN
                     if (is_array($value))
                         $DB->andWhere($value);
