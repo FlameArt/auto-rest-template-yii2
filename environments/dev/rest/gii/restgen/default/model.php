@@ -37,6 +37,7 @@ foreach ($relations as $name => $relation) {
 ?>
 
 use yii\helpers\ArrayHelper;
+use yii\helpers\Json;
 
 
 
