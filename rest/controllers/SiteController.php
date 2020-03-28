@@ -98,17 +98,17 @@ class SiteController extends Controller
             $table = [
 
                 // имя таблицы
-                'name' => $class::tableName(),
+                'name' => $class->tableName(),
 
                 // поля
                 'fields' => []
             ];
 
             // Получаем правила для элементов
-            $rules = $class::rules();
+            $rules = $class->rules();
 
             // Проходимся по полям таблицы
-            foreach ($class::attributeLabels() as $name => $desc) {
+            foreach ($class->attributeLabels() as $name => $desc) {
 
                 // Добавляем поле
                 $field = [
@@ -149,7 +149,7 @@ class SiteController extends Controller
                             $linkedClass = new $rule['targetClass']();
 
                             $field['linkedto'] = [
-                                'table' => $linkedClass::tableName(),
+                                'table' => $linkedClass->tableName(),
                                 'field' => current($rule['targetAttribute'])
                             ];
 
