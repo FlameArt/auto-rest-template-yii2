@@ -3,6 +3,7 @@
 namespace rest\controllers;
 
 // Imports
+use yii\base\Model;
 use yii\helpers\Json;
 use yii\rest\ActiveController;
 use yii\data\ActiveDataProvider;
@@ -60,13 +61,20 @@ class ActiveRestController extends ActiveController
         $data = Json::decode(\Yii::$app->request->getRawBody(), true);
 
         /**
+         * Экземпляр модели
+         * @var $DBModel ActiveRecord
+         */
+        $ModelClass = ($this->modelClass);
+        $DBModel = new $ModelClass();
+
+        /**
          * Создаём новый поиск
          * @var $DB ActiveQuery
          */
-        $DB = ($this->modelClass)::find();
+        $DB = $DBModel::find();
 
         // Список полей
-        $DBFields = ($this->modelClass)::tableFields();
+        $DBFields = $DBModel::tableFields();
 
         // Сортировка
         if(isset($data['sort'])) {
@@ -98,7 +106,15 @@ class ActiveRestController extends ActiveController
             $DB->addSelect($data['fields']);
         else
             // По-умолчанию получаем все столбцы
-            $DB->addSelect([\Yii::$app->db->quoteColumnName(($this->modelClass)::tableName()).".*"]);
+            $DB->addSelect([\Yii::$app->db->quoteColumnName($DBModel::tableName()).".*"]);
+
+        // Объединяем extends поля в контроллере с полями в запросе
+        // [можно указывать даже просто строку, как интуитивно понятно]
+        $expand_fields = []; // $this->extendFields;
+        if(isset($data['expand'])) $expand_fields = $data['expand'];
+        if(is_string($expand_fields)) $expand_fields = [$expand_fields];
+        if(is_array($expand_fields)) $this->extendFields = array_unique(array_merge($expand_fields,$this->extendFields));
+
 
         // Указываем фильтры
         if(isset($data['where']))
@@ -107,11 +123,21 @@ class ActiveRestController extends ActiveController
 
                 // Поиск по обычному полю
                 if(!array_key_exists($key, $DBFields) || $DBFields[$key] !== 'json') {
+
+                    // Если есть extend поля, то при отсутствии указания на конкретную таблицу, нужно её указать, чтобы избежать перекрёстных where условий
+                    if(count($this->extendFields)>0) {
+                        if(strpos($key, ".")===false)
+                            $key = $DBModel::tableName() . "." . $key;
+                    }
+
                     // Массивные значения добавляем как условия, т.к. это может быть типа LIKE или NOT IN
                     if (is_array($value))
                         $DB->andWhere($value);
                     else
                         $DB->andWhere([$key => $value]);
+
+
+
                 }
 
                 else {
@@ -141,25 +167,19 @@ class ActiveRestController extends ActiveController
         //              такой суммарно даёт 8 запросов против 14 для ->with, и для (15+число записей) для expand
         //              данные затем распределяются по массивам в TableModel для каждой таблицы и выводятся в поле extra
 
-        // Объединяем extends поля в контроллере с полями в запросе
-        // [можно указывать даже просто строку, как интуитивно понятно]
-        $expand_fields = []; // $this->extendFields;
-        if(isset($data['expand'])) $expand_fields = $data['expand'];
-        if(is_string($expand_fields)) $expand_fields = [$expand_fields];
-        if(is_array($expand_fields)) $this->extendFields = array_unique(array_merge($expand_fields,$this->extendFields));
 
         // Делаем механику экстра-полей
         foreach ($this->extendFields as $field) {
 
             // Находим модель зависимого класса по имени поля, чтобы из него получить имя таблицы
-            foreach (($this->modelClass)::rules() as $rule) {
+            foreach ($DBModel->rules() as $rule) {
 
                 if($rule[0][0]===$field && isset($rule['targetClass'])) {
 
                     // Класс найден - вписываем найденную таблицу в LEFT JOIN
                     $DB->leftJoin(($rule['targetClass'])::tableName(),
                         ($rule['targetClass'])::tableName() . "." . $rule['targetAttribute'][$field] .
-                        ' = ' . ($this->modelClass)::tableName() . "." . $field);
+                        ' = ' . $DBModel::tableName() . "." . $field);
 
                     // Записываем все поля таблицы для вывода
                     foreach (($rule['targetClass'])::tableFields() as $fieldName=>$fieldValue)
